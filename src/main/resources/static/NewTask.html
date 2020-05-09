@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+<title>Bootstrap 101 Template</title>
+
+<!-- Bootstrap -->
+<link href="https://cdn.bootcss.com/twitter-bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+<!-- BS-table -->
+<link href="https://cdn.bootcss.com/bootstrap-table/1.15.3/bootstrap-table.min.css" rel="stylesheet">
+
+<!-- HTML5 shim 和 Respond.js 是为了让 IE8 支持 HTML5 元素和媒体查询（media queries）功能 -->
+<!-- 警告：通过 file:// 协议（就是直接将 html 页面拖拽到浏览器中）访问页面时 Respond.js 不起作用 -->
+<!--[if lt IE 9]>
+      <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+	<!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+	<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+	<!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+	<script src="https://cdn.bootcss.com/twitter-bootstrap/3.4.1/js/bootstrap.min.js"></script>
+	<!-- 加载 Bootstrap-table中文插件。 -->
+	<script src="https://cdn.bootcss.com/bootstrap-table/1.15.3/bootstrap-table.min.js"></script>
+
+
+
+	<form class="form-horizontal" style="padding-bottom: 10px; width: 104%; margin-left: -15px" id="form1">
+		<div class="form-group">
+			<label for="job_name" class="col-sm-2 control-label">任務名稱</label>
+			<div class="col-sm-2">
+				<input type="text" class="form-control" id="job_name" placeholder="job name" name="jobName">
+			</div>
+			<label for="job_desc" class="col-sm-2 control-label">任務描述</label>
+			<div class="col-sm-2">
+				<input type="text" class="form-control" id="job_desc" placeholder="job description">
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="job_group" class="col-sm-2 control-label">任務組別</label>
+			<div class="col-sm-2">
+				<input type="text" class="form-control" id="job_group" placeholder="job group">
+			</div>
+			<label for="job_class" class="col-sm-2 control-label">任務執行類名</label>
+			<div class="col-sm-6">
+				<input type="text" class="form-control" id="job_class" placeholder="job class">
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="job_param" class="col-sm-2 control-label">任務執行參數</label>
+			<div class="col-sm-10">
+				<input type="text" class="form-control" id="job_param" placeholder="job parameter">
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="cron_id" class="col-sm-2 control-label">任務執行規則</label>
+			<div class="col-sm-10">
+				<input type="text" class="form-control" id="cron_id" placeholder="job cron id" name="cronId">
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="valid" class="col-sm-2 control-label">任務狀態</label>
+			<div class="col-sm-10">
+				<input type="text" class="form-control" id="valid" placeholder="job valid">
+			</div>
+		</div>
+
+
+		<div class="form-group">
+			<div class="col-sm-offset-2 col-sm-10">
+				<button type="button" class="btn btn-default" id="submit">提交</button>
+				<button type="reset" class="btn btn-default">重置</button>
+			</div>
+		</div>
+	</form>
+
+	<div class="table-responsive" style="margin: 40px;">
+		<div id="toolbar">
+			<button id="button" class="btn btn-default">insertRow</button>
+			<button id="getTableData" class="btn btn-default">getTableData</button>
+		</div>
+		<table id="table" class="table text-nowrap"></table>
+	</div>
+
+	<style>
+/*定义类名为.thead-blue的样式*/
+.table .thead-blue th {
+	color: #fff;
+	background-color: #3195f1;
+	border-color: #0d7adf;
+}
+</style>
+
+	<script type="text/javascript">
+		$('#submit').click(function() {
+			$.ajax({
+				type : "POST",//方法类型
+				dataType : "json",//预期服务器返回的数据类型
+				url : "/schedule/saveJob",//url
+				data : $('#form1').serialize(),
+				success : function(result) {
+					console.log(result);//打印服务端返回的数据(调试用)
+					if (result.code == 200) {
+						alert("SUCCESS");
+					}
+				},
+				error : function() {
+					alert("异常！");
+				}
+			});
+
+		});
+
+		// 行内按钮，点击事件
+		window.operateEvents = {
+			'click .RoleOfedita' : function(e, value, row, index) {
+				console.log(row.id);
+				start(row.id)
+			},
+			'click .RoleOfeditb' : function(e, value, row, index) {
+				stop(row.id);
+			},
+		};
+
+		$('#table').bootstrapTable({
+			ajax : function(request) { //使用ajax请求
+				$.ajax({
+					type : "GET",
+					url : "/schedule/getData",
+					contentType : "application/json;charset=utf-8",
+					dataType : "json",
+					data : "",
+					success : function(res) {
+						request.success({
+							row : res
+						});
+						$('#table').bootstrapTable('load', res.result);
+					},
+					error : function(res) {
+						console.log(res);
+					}
+				});
+			},
+			theadClasses : "thead-blue",//设置thead-blue为表头样式
+			classes : "table table-bordered table-striped table-sm table-dark",
+			toolbar : '#toolbar',//工具按钮用哪个容器
+			striped : true, //是否显示行间隔色
+			cache : false, //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+			pagination : true, //是否显示分页（*）
+			sortable : true, //是否启用排序
+			sortOrder : "asc", //排序方式
+			//queryParams:"",//传递参数（*）
+			sidePagination : "server", //分页方式：client客户端分页，server服务端分页（*）
+			pageNumber : 1, //初始化加载第一页，默认第一页
+			pageSize : 20, //每页的记录行数（*）
+			pageList : [ 10, 25, 50, 100 ], //可供选择的每页的行数（*）
+			smartDisplay : true,
+			search : false, //是否显示表格搜索，此搜索是客户端搜索，不会进服务端，所以，个人感觉意义不大
+			strictSearch : true,
+			showColumns : true, //是否显示所有的列
+			showRefresh : true, //是否显示刷新按钮
+			minimumCountColumns : 2, //最少允许的列数
+			clickToSelect : false, //是否启用点击选中行
+			height : 500, //行高，如果没有设置height属性，表格自动根据记录条数觉得表格高度
+			uniqueId : "ID", //每一行的唯一标识，一般为主键列
+			showToggle : true, //是否显示详细视图和列表视图的切换按钮
+			cardView : false, //是否显示详细视图
+			detailView : true, //是否显示父子表
+			columns : [ {
+				field : 'id',
+				title : '任務編號'
+			}, {
+				field : 'jobName',
+				title : '任務名稱'
+			}, {
+				field : 'jobDesc',
+				title : '任務描述'
+			}, {
+				field : 'jobGroup',
+				title : '任務組別'
+			}, {
+				field : 'jobClass',
+				title : '任務執行類名'
+			}, {
+				field : 'jobParam',
+				title : '任務執行參數'
+			}, {
+				field : 'cronId',
+				title : '任務執行規則'
+			}, {
+				field : 'operate',
+				title : '操作',
+				events : 'operateEvents',
+				formatter : 'operateFormatter' //自定义表格内容，字符串内是方法名称
+			} ],
+			//注册加载子表的事件。注意下这里的三个参数！
+			onExpandRow : function(index, row, $detail) {
+				InitSubTable(index, row, $detail);
+			}
+
+		});
+
+		//初始化子表格(无线循环)
+		InitSubTable = function(index, row, $detail) {
+			var parentid = row.cronId;
+			var cur_table = $detail.html(
+					'<div class="table-responsive"> <table></table> </div>')
+					.find('table');
+			$(cur_table).bootstrapTable({
+				ajax : function(request) { //使用ajax请求
+					$.ajax({
+						type : "GET",
+						url : "/schedule/getCron",
+						contentType : "application/json;charset=utf-8",
+						dataType : "json",
+						data : {
+							id : parentid
+						},
+						success : function(res) {
+							request.success({
+								row : res
+							});
+							$(cur_table).bootstrapTable('load', res);
+						},
+						error : function(res) {
+							console.log(res);
+						}
+					});
+				},
+				cache : false, //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+				pagination : false, //是否显示分页（*）
+				sortable : false, //是否启用排序
+				sidePagination : "client", //分页方式：client客户端分页，server服务端分页（*）
+				pageNumber : 1, //初始化加载第一页，默认第一页
+				clickToSelect : true,
+				detailView : false,//父子表
+				pageSize : 10,
+				pageList : [ 10, 25 ],
+				columns : [ {
+					field : 'id',
+					title : '規則編號'
+				}, {
+					field : 'cron',
+					title : '規則'
+				}, {
+					field : 'empNo',
+					title : '工號'
+				}, {
+					field : 'updateTime',
+					title : '更新時間'
+				} ],
+				onLoadSuccess : function() { //加载成功时执行  
+					console.log("加载数据成功");
+				},
+				onLoadError : function() { //加载失败时执行  
+					console.log("加载数据失败");
+				},
+				//无线循环取子表，直到子表里面没有记录
+				onExpandRow : function(index, row, $Subdetail) {
+					InitSubTable(index, row, $Subdetail);
+				}
+			});
+		};
+
+		function operateFormatter(value, row, index) {
+			return [
+					'<button type="button" class="RoleOfedita btn btn-primary" style="margin-right:15px;">重启</button>',
+					'<button type="button" class="RoleOfeditb btn btn-primary" style="margin-right:15px;">关闭</button>',
+					'<button type="button" class="RoleOfeditc btn btn-primary" style="margin-right:15px;">启动</button>' ]
+					.join('');
+		}
+
+		function start(id) {
+			console.log(id);
+			$.ajax({
+				type : "get",
+				url : "/schedule/start/" + id,
+				contentType : "application/json;charset=utf-8",
+				dataType : "json",
+				success : function(res) {
+					alert(res);
+				},
+				error : function(res) {
+					alert(res);
+				}
+			});
+		}
+
+		function stop(id) {
+			console.log(id);
+			$.ajax({
+				type : "get",
+				url : "/schedule/stop/" + id,
+				contentType : "application/json;charset=utf-8",
+				dataType : "json",
+				success : function(res) {
+					alert(res);
+				},
+				error : function(res) {
+					alert(res);
+				}
+			});
+		}
+
+		function del(id) {
+			console.log(id);
+			$.ajax({
+				type : "get",
+				url : "/schedule/start" + id,
+				contentType : "application/json;charset=utf-8",
+				dataType : "json",
+				success : function(res) {
+					alert(res);
+				},
+				error : function(res) {
+					alert(res);
+				}
+			});
+		}
+	</script>
+
+</body>
+</html>
